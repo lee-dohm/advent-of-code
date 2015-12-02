@@ -1,13 +1,19 @@
 #!/usr/bin/env elixir
 
 defmodule Area do
-  def calculate({length, width, height}) do
-    top = length * width
-    front = width * height
-    side = length * height
+  def calculate_area([length, width, height]) do
+    [top, front, side] = calculate_side_areas(length, width, height)
     min = Enum.min([top, front, side])
 
     2 * top + 2 * front + 2 * side + min
+  end
+
+  def calculate_length(dimensions) do
+    [one, two] = dimensions
+                 |> Enum.sort
+                 |> Enum.take(2)
+
+    one + one + two + two + Enum.reduce(dimensions, 1, &(&1 * &2))
   end
 
   @pattern ~r/(?<length>\d+)x(?<width>\d+)x(?<height>\d+)/
@@ -18,14 +24,23 @@ defmodule Area do
     {width, _} = Integer.parse(parts["width"])
     {height, _} = Integer.parse(parts["height"])
 
-    {length, width, height}
+    [length, width, height]
   end
+
+  defp calculate_side_areas(l, w, h), do: [l * w, w * h, l * h]
 end
 
 {:ok, input} = File.read(Path.join(__DIR__, "input.txt"))
 
-answer = input
-         |> String.split("\n", trim: true)
-         |> Enum.reduce(0, &(Area.calculate(Area.parse(&1)) + &2))
+dimensions = input
+             |> String.split("\n", trim: true)
+             |> Enum.map(&Area.parse/1)
 
-IO.puts(answer)
+area = dimensions
+       |> Enum.reduce(0, &(Area.calculate_area(&1) + &2))
+
+IO.puts("Wrapping Paper Area = #{area}")
+
+length = dimensions
+         |> Enum.reduce(0, &(Area.calculate_length(&1) + &2))
+IO.puts("Ribbon Length = #{length}")
