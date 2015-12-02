@@ -1,0 +1,31 @@
+#!/usr/bin/env elixir
+
+defmodule Area do
+  def calculate({length, width, height}) do
+    top = length * width
+    front = width * height
+    side = length * height
+    min = Enum.min([top, front, side])
+
+    2 * top + 2 * front + 2 * side + min
+  end
+
+  @pattern ~r/(?<length>\d+)x(?<width>\d+)x(?<height>\d+)/
+
+  def parse(text) do
+    parts = Regex.named_captures(@pattern, text)
+    {length, _} = Integer.parse(parts["length"])
+    {width, _} = Integer.parse(parts["width"])
+    {height, _} = Integer.parse(parts["height"])
+
+    {length, width, height}
+  end
+end
+
+{:ok, input} = File.read(Path.join(__DIR__, "input.txt"))
+
+answer = input
+         |> String.split("\n", trim: true)
+         |> Enum.reduce(0, &(Area.calculate(Area.parse(&1)) + &2))
+
+IO.puts(answer)

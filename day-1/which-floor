@@ -1,0 +1,17 @@
+#!/usr/bin/env elixir
+
+defmodule Floor do
+  def calculate(input), do: resolve(0, input)
+
+  defp resolve(result, input) do
+    case String.next_codepoint(input)  do
+      {nil, _} -> result
+      {"\n", _} -> result
+      {"(", rest} -> resolve(result + 1, rest)
+      {")", rest} -> resolve(result - 1, rest)
+    end
+  end
+end
+
+{:ok, input} = File.read(Path.join(__DIR__, "input.txt"))
+IO.puts(Floor.calculate(input))
