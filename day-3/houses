@@ -1,0 +1,89 @@
+#!/usr/bin/env elixir
+
+ExUnit.start(autorun: false)
+
+defmodule Navigation do
+  def fly(input) when is_binary(input), do: fly_text(input)
+  def fly(input), do: raise(ArgumentError, message: "Unrecognized input: #{input}")
+
+  defp fly_text(input), do: next_house([{0, 0}], input)
+
+  defp next_house(houses, input) do
+    case String.next_grapheme(input) do
+      nil               -> Enum.uniq(houses)
+      {direction, rest} -> next_house([move(hd(houses), direction) | houses], rest)
+    end
+  end
+
+  defp move({x, y}, direction) do
+    case direction do
+      "^" -> {x, y + 1}
+      "v" -> {x, y - 1}
+      "<" -> {x - 1, y}
+      ">" -> {x + 1, y}
+      _   -> {x, y}
+    end
+  end
+end
+
+defmodule NavigationTest do
+  use ExUnit.Case, async: true
+
+  test "non-string input" do
+    assert_raise ArgumentError, fn -> Navigation.fly(nil) end
+  end
+
+  test "empty input" do
+    assert Navigation.fly("") == [{0, 0}]
+  end
+
+  test "one up" do
+    assert Navigation.fly("^") == [{0, 1}, {0, 0}]
+  end
+
+  test "one down" do
+    assert Navigation.fly("v") == [{0, -1}, {0, 0}]
+  end
+
+  test "one left" do
+    assert Navigation.fly("<") == [{-1, 0}, {0, 0}]
+  end
+
+  test "one right" do
+    assert Navigation.fly(">") == [{1, 0}, {0, 0}]
+  end
+
+  test "square" do
+    assert Navigation.fly("^>v<") == Enum.uniq([{0, 0}, {1, 0}, {1, 1}, {0, 1}, {0, 0}])
+  end
+
+  test "two lucky houses" do
+    assert Enum.count(Navigation.fly("^v^v^v^v^v")) == 2
+  end
+end
+
+run = fn ->
+  {:ok, input} = File.read(Path.join(__DIR__, "input.txt"))
+  houses = Navigation.fly(input)
+  IO.puts("Number of Houses = #{Enum.count(houses)}")
+end
+
+split = fn ->
+  {:ok, text} = File.read(Path.join(__DIR__, "input.txt"))
+  input = String.graphemes(text)
+  santa = Enum.take_every(input, 2)
+  robo_santa = Enum.take_every(Enum.drop(input, 1), 2)
+
+  santa_houses = Navigation.fly(santa)
+  robo_santa_houses = Navigation.fly(robo_santa)
+
+  IO.puts("Number of Houses = #{Enum.count(santa_houses ++ robo_santa_houses)}")
+end
+
+test = fn -> ExUnit.run end
+
+case System.argv do
+  ["--test"] -> test.()
+  ["--split"] -> split.()
+  _          -> run.()
+end
