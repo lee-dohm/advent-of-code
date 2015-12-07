@@ -1,0 +1,44 @@
+#!/usr/bin/env elixir
+
+ExUnit.start(autorun: false)
+
+defmodule AdventMining do
+  def hash(input), do: :crypto.hash(:md5, input) |> Base.encode16
+
+  def seek(prefix, goal \\ "00000"), do: seek_zeros(prefix, 1, goal)
+
+  defp seek_zeros(prefix, suffix, goal) do
+    text = prefix <> Integer.to_string(suffix)
+    case String.starts_with?(hash(text), goal) do
+      true -> suffix
+      _    -> seek_zeros(prefix, suffix + 1, goal)
+    end
+  end
+end
+
+defmodule AdventMiningTest do
+  use ExUnit.Case, async: true
+
+  test "hash abcdef609043" do
+    assert String.starts_with?(AdventMining.hash("abcdef609043"), "00000")
+  end
+
+  test "hash pqrstuv1048970" do
+    assert String.starts_with?(AdventMining.hash("pqrstuv1048970"), "00000")
+  end
+
+  test "seek abcdef" do
+    assert AdventMining.seek("abcdef") == 609043
+  end
+end
+
+run = fn ->
+  IO.puts("Value = #{AdventMining.seek("yzbqklnj", "000000")}")
+end
+
+test = fn -> ExUnit.run end
+
+case System.argv do
+  ["--test"] -> test.()
+  _          -> run.()
+end
