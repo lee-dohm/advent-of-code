@@ -1,0 +1,38 @@
+#!/usr/bin/env elixir
+
+ExUnit.start(autorun: false)
+
+defmodule Classifier do
+  def double_letter?(input) do
+
+  end
+  
+  def three_vowels?(input) do
+    Regex.match?(~r/[aeiou].*[aeiou].*[aeiou]/, input)
+  end
+end
+
+defmodule ClassifierTest do
+  use ExUnit.Case, async: true
+
+  test "three vowels" do
+    assert Classifier.three_vowels?("aei")
+    assert Classifier.three_vowels?("xazegov")
+    assert Classifier.three_vowels?("aeiouaeiouaeiou")
+  end
+
+  test "double letter" do
+    assert Classifier.double_letter?("xx")
+    assert Classifier.double_letter?("abcdde")
+    assert Classifier.double_letter?("aabbccdd")
+  end
+end
+
+run = fn -> nil end
+
+test = fn -> ExUnit.run end
+
+case System.argv do
+  ["--test"] -> test.()
+  _          -> run.()
+end
