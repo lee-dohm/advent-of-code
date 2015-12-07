@@ -6,6 +6,8 @@ defmodule Navigation do
   def fly(input) when is_binary(input), do: fly_text(input)
   def fly(input), do: raise(ArgumentError, message: "Unrecognized input: #{input}")
 
+  def split(input), do: split_input(input, {"", ""}, :odd)
+
   defp fly_text(input), do: next_house([{0, 0}], input)
 
   defp next_house(houses, input) do
@@ -22,6 +24,20 @@ defmodule Navigation do
       "<" -> {x - 1, y}
       ">" -> {x + 1, y}
       _   -> {x, y}
+    end
+  end
+
+  defp split_input(input, {odd, even}, :odd) do
+    case String.next_grapheme(input) do
+      nil               -> {odd, even}
+      {direction, rest} -> split_input(rest, {odd <> direction, even}, :even)
+    end
+  end
+
+  defp split_input(input, {odd, even}, :even) do
+    case String.next_grapheme(input) do
+      nil -> {odd, even}
+      {direction, rest} -> split_input(rest, {odd, even <> direction}, :odd)
     end
   end
 end
@@ -60,6 +76,18 @@ defmodule NavigationTest do
   test "two lucky houses" do
     assert Enum.count(Navigation.fly("^v^v^v^v^v")) == 2
   end
+
+  test "split" do
+    assert Navigation.split("^v^v^v^v^v") == {"^^^^^", "vvvvv"}
+  end
+
+  test "split one up one down" do
+    {santa, robo_santa} = Navigation.split("^v")
+    santa_houses = Navigation.fly(santa)
+    robo_santa_houses = Navigation.fly(robo_santa)
+
+    assert Enum.count(Enum.uniq(santa_houses ++ robo_santa_houses)) == 3
+  end
 end
 
 run = fn ->
@@ -70,14 +98,12 @@ end
 
 split = fn ->
   {:ok, text} = File.read(Path.join(__DIR__, "input.txt"))
-  input = String.graphemes(text)
-  santa = Enum.take_every(input, 2)
-  robo_santa = Enum.take_every(Enum.drop(input, 1), 2)
+  {santa, robo_santa} = Navigation.split(text)
 
   santa_houses = Navigation.fly(santa)
   robo_santa_houses = Navigation.fly(robo_santa)
 
-  IO.puts("Number of Houses = #{Enum.count(santa_houses ++ robo_santa_houses)}")
+  IO.puts("Number of Houses = #{Enum.count(Enum.uniq(santa_houses ++ robo_santa_houses))}")
 end
 
 test = fn -> ExUnit.run end
